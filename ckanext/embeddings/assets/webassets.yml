@@ -1,0 +1,14 @@
+# embedding-js:
+#   filter: rjsmin
+#   output: ckanext-embedding/%(version)s-embedding.js
+#   contents:
+#     - js/embedding.js
+#   extra:
+#     preload:
+#       - base/main
+
+# embedding-css:
+#   filter: cssrewrite
+#   output: ckanext-embedding/%(version)s-embedding.css
+#   contents:
+#     - css/embedding.css

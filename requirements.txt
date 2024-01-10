@@ -1,0 +1,5 @@
+# TODO: pin
+pgvector
+openai
+sentence-transformers
+
