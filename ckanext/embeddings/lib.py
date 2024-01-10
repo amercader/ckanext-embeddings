@@ -2,6 +2,7 @@ from sentence_transformers import SentenceTransformer
 from openai import OpenAI
 
 
+# TODO: token count function
 class BaseEmbeddingsBackend:
     def get_dataset_values(self, dataset):
 

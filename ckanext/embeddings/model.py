@@ -7,6 +7,8 @@ from ckan import model
 
 from ckan.plugins import toolkit
 
+# TODO: remove if not used
+
 
 class DatasetEmbedding(toolkit.BaseModel):
 

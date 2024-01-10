@@ -13,9 +13,14 @@ class EmbeddingPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IConfigurer, inherit=True)
     plugins.implements(plugins.IPackageController, inherit=True)
 
+    backend = None
+
     # IConfigurer
 
     def update_config(self, config):
+
+        self.backend = get_embeddings_backend()
+
         toolkit.add_template_directory(config, "templates")
 
     # IClick
@@ -29,16 +34,13 @@ class EmbeddingPlugin(plugins.SingletonPlugin):
 
         dataset_id = dataset_dict["id"]
 
-        # TODO generate here
+        if not self.backend:
+            self.backend = get_embeddings_backend()
+        dataset_embedding = self.backend.get_embedding_for_dataset(dataset_dict)
 
-        dataset_embedding = (
-            model.Session.query(DatasetEmbedding)
-            .filter(DatasetEmbedding.package_id == dataset_id)
-            .one_or_none()
-        )
-
-        if dataset_embedding:
-            dataset_dict["vector"] = list(map(str, dataset_embedding.embedding))
+        if dataset_embedding is not None:
+            # TODO: config field name
+            dataset_dict["vector"] = list(map(str, dataset_embedding))
 
         return dataset_dict
 
@@ -49,7 +51,7 @@ class EmbeddingPlugin(plugins.SingletonPlugin):
 
         q = search_params.get("q")
 
-        if not q or q == "*:*":
+        if not q or q == "*:*" or q.startswith("!{knn"):
             return search_params
 
         search_params["defType"] = "lucene"
@@ -57,12 +59,9 @@ class EmbeddingPlugin(plugins.SingletonPlugin):
         # TODO: default
         rows = search_params.get("rows", 10)
 
-        # TODO: reuse?
-        backend = get_embeddings_backend()
-
         # {!knn f%3Dvector topK%3D10}[embedding]
 
-        embedding = backend.get_embedding_for_string(q)
+        embedding = self.backend.get_embedding_for_string(q)
 
         search_params["q"] = f"{{!knn f=vector topK={rows}}}{list(embedding)}"
 
