@@ -5,12 +5,17 @@ import ckan.plugins.toolkit as toolkit
 
 from ckanext.embeddings.model import DatasetEmbedding
 from ckanext.embeddings import cli
+from ckanext.embeddings.actions import package_similar_show
+from ckanext.embeddings.auth import package_similar_show as package_similar_show_auth
 from ckanext.embeddings.lib import get_embeddings_backend
 
 
 class EmbeddingPlugin(plugins.SingletonPlugin):
-    plugins.implements(plugins.IClick)
+
     plugins.implements(plugins.IConfigurer, inherit=True)
+    plugins.implements(plugins.IClick)
+    plugins.implements(plugins.IActions)
+    plugins.implements(plugins.IAuthFunctions)
     plugins.implements(plugins.IPackageController, inherit=True)
 
     backend = None
@@ -27,6 +32,16 @@ class EmbeddingPlugin(plugins.SingletonPlugin):
 
     def get_commands(self):
         return cli.get_commands()
+
+    # IActions
+
+    def get_actions(self):
+        return {"package_similar_show": package_similar_show}
+
+    # IAuthFunctions
+
+    def get_auth_functions(self):
+        return {"package_similar_show": package_similar_show_auth}
 
     # IDatasetForm
 
