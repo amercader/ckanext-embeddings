@@ -1,21 +1,24 @@
+import logging
+
 from sentence_transformers import SentenceTransformer
 from openai import OpenAI
 
 
+log = logging.getLogger(__name__)
+
+
 # TODO: token count function
 class BaseEmbeddingsBackend:
-    def get_dataset_values(self, dataset):
+    def get_dataset_values(self, dataset_dict):
 
-        #TODO: only dataset_dicts when migrating to index-time
-
-        if isinstance(dataset, dict):
-            return dataset["title"]
+        if dataset_dict.get("notes"):
+            return dataset_dict["title"] + " " + dataset_dict["notes"]
         else:
-            return dataset.title
+            return dataset_dict["title"]
 
-    def get_embedding_for_dataset(self, dataset):
+    def get_embedding_for_dataset(self, dataset_dict):
 
-        return self.create_embedding(self.get_dataset_values(dataset))
+        return self.create_embedding(self.get_dataset_values(dataset_dict))
 
     def get_embedding_for_string(self, value):
 
@@ -33,9 +36,20 @@ class SentenceTransformerBackend(BaseEmbeddingsBackend):
         # TODO: config model
         self.model = SentenceTransformer("all-MiniLM-L6-v2")
 
-        #self.model = SentenceTransformer("distiluse-base-multilingual-cased-v1")
+        # self.model = SentenceTransformer("distiluse-base-multilingual-cased-v1")
+
+    def _check_input_length(self, values):
+        num_input = len(
+            self.model[0]
+            .tokenizer(values, return_attention_mask=False, return_token_type_ids=False)
+            .input_ids
+        )
+        max_input = self.model.max_seq_length
+        if num_input > max_input:
+            log.info(f"Too many input values, input will be truncated ({num_input} vs {max_input})")
 
     def create_embedding(self, values):
+        self._check_input_length(values)
 
         return self.model.encode(values)
 
@@ -68,8 +82,7 @@ embeddings_backends = {
 
 def get_embeddings_backend():
 
-    #TODO: configure
+    # TODO: configure
     backend = "sentence_transformers"
 
     return embeddings_backends[backend]()
-
