@@ -106,8 +106,8 @@ embeddings_backends = {
 def get_embeddings_backend():
 
     # TODO: configure
-    backend = "openai"
+    #backend = "openai"
 
-#    backend = "sentence_transformers"
+    backend = "sentence_transformers"
 
     return embeddings_backends[backend]()
