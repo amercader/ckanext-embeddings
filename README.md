@@ -1,41 +1,138 @@
-[![Tests](https://github.com//ckanext-embedding/workflows/Tests/badge.svg?branch=main)](https://github.com//ckanext-embedding/actions)
 
-# ckanext-embedding
+# ckanext-embeddings
 
-**TODO:** Put a description of your extension here:  What does it do? What features does it have? Consider including some screenshots or embedding a video!
+An extension that uses Machine Learning Embeddings to provide similarity-based features for CKAN portals. Currently there are two features explored:
 
+* Returning similar datasets
+* Performing Semantic Search in Solr integrated with the usual CKAN search
+
+
+|                              :warning: Note :warning:                              |
+| ---------------------------------------------------------------------------------- |
+| This is just an alpha version and has not been tested in any real world deployment |
+
+## What this does
+
+Embeddings are a Machine Learning technique that allows to encode complex pieces of information
+like text or images as numerical vectors (lists of numbers) that encode the relationships and
+similarities between these pieces of information. The closer the vectors are, the more similar
+these objects are according to the underlying model used to create the embeddings. There are many
+introductory resources to learn more about embeddings, here are some I found useful:
+
+* [Embeddings: What they are and why they matter](https://simonwillison.net/2023/Oct/23/embeddings/)
+* [What are embeddings in machine learning?](https://www.cloudflare.com/en-gb/learning/ai/what-are-embeddings/)
+* [Getting Started With Embeddings](https://huggingface.co/blog/getting-started-with-embeddings)
+
+In the context of CKAN, this plugin computes embeddings for all datasets, using their metadata
+(their title or description, but also any other relevant metadata field can be used). Being able to 
+compare datasets allows us to build features that increase discoverability of relevant data for users.
+
+Right now there are two features implemented:
+
+1. Similar datasets
+
+By computing all datasets embeddings and rank them against a particular dataset one, we can get the most
+similar datasets to the one provided according to the model. This similarity won't just take text-based similarity
+into account but also but the meaning and context of the dataset metadata. So for instance when looking for similar
+datasets to a "Bathing Water Quality" one, besides other datasets explicitly mentioning "water quality" in their
+metadata you'll get others that might include things like "Wastewater Treatment", "Aquaculture Sites" or "Lakes".
+
+The plugin adds a `package_similar_show` action that will return the closest datasets to the one provided with
+the `id` parameter (id or name). 5 are returned by default, which can be changed using the `limit` paramater.
+
+
+2. Semantic search
+
+Following the same approach as above, we can rank the embeddings of the portal datasets not against another dataset
+title but against an arbitrary query term. That will give us the most similar datasets to the provided search term, 
+and as it is Solr what is performing the query, we can include any additional filters like in the normal CKAN search.
+
+There's one important distinction though, and that is that the Semantic or Vector search always returns a fixed number
+of results, regardless of relevance. The standard search UI hasn't been modified to account for this fact, but it
+probably should.
+
+With the plugin activated, you can pass an extra parameter to the `package_search` action to perform a semantic search
+instead of the default Solr one (Solr calls this [Dense Vector Search](https://solr.apache.org/guide/solr/latest/query-guide/dense-vector-search.html)).
+Consider the following standard search calls from the command line:
+
+```
+ckanapi action package_search q=boats | jq ".results[].title"
+
+"Inshore boat-based cetacean Survey 2011"
+"Inshore boat-based cetacean Survey 2012"
+"Inshore boat-based cetacean Survey 2010"
+"Boat-based Visual Surveys for Bottlenose Dolphins in the West Connacht Coast SAC in 2021"
+"Bottlenose dolphins in the Lower River Shannon SAC, 2022"
+```
+
+And this time using the semantic search:
+
+```
+ckanapi action package_search q=boats extras='{"ext_vector_search":"true"}' | jq ".results[].title"
+
+"Marinas"
+"Estuary"
+"Fishing Port"
+"Sailing Density"
+"Surfing"
+"Ship Wrecks in Irish Waters - Recorded Year of Loss"
+"Sea Cliff"
+"Seascape Coastal Type"
+"Midwater Trawl FIshing"
+"Net Fishing"
+```
+
+Remember that the Semantic Search will always return a fixed number of datasets (the default in this case is 10).
+
+## Implementation
+
+TODO
+
+## Customizing
+
+TODO
 
 ## Requirements
 
-**TODO:** For example, you might want to mention here which versions of CKAN this
-extension works with.
+Tested on CKAN 2.10/master
 
-If your extension works across different versions you can add the following table:
+As of January 2024 this plugin requires a patch in CKAN core to allow the use of
+local fields in Solr queries (an upstream patch will be submitted to handle this 
+via configuration instead):
 
-Compatibility with core CKAN versions:
+```diff
+diff --git a/ckan/lib/search/query.py b/ckan/lib/search/query.py
+index 70869ae3f..fb56016c0 100644
+--- a/ckan/lib/search/query.py
++++ b/ckan/lib/search/query.py
+@@ -397,8 +397,10 @@ class PackageSearchQuery(SearchQuery):
+ 
+         query.setdefault("df", "text")
+         query.setdefault("q.op", "AND")
++
++
+         try:
+-            if query['q'].startswith('{!'):
++            if query['q'].startswith('{!') and not query['q'].startswith('{!knn'):
+                 raise SearchError('Local parameters are not supported.')
+         except KeyError:
+             pass
 
-| CKAN version    | Compatible?   |
-| --------------- | ------------- |
-| 2.6 and earlier | not tested    |
-| 2.7             | not tested    |
-| 2.8             | not tested    |
-| 2.9             | not tested    |
+```
 
-Suggested values:
+The Semantic Search feature requires a custom Solr schema, with a [Dense Vector Search](https://solr.apache.org/guide/solr/latest/query-guide/dense-vector-search.html) field. Included in the plugin there is a Dockerfile based on the official
+CKAN Solr images that you can use (you might need to adjust it to the model you use, see TODO):
 
-* "yes"
-* "not tested" - I can't think of a reason why it wouldn't work
-* "not yet" - there is an intention to get it working
-* "no"
+```
+cd solr
+docker build -t ckan/ckan-solr:2.10-solr9-vector .
+docker run --name ckan-solr-9-vector -d ckan/ckan-solr:2.10-solr9-vector
+```
 
 
 ## Installation
 
-**TODO:** Add any additional install steps to the list below.
-   For example installing any non-Python dependencies or adding any required
-   config settings.
-
-To install ckanext-embedding:
+To install ckanext-embeddings:
 
 1. Activate your CKAN virtual environment, for example:
 
@@ -43,12 +140,12 @@ To install ckanext-embedding:
 
 2. Clone the source and install it on the virtualenv
 
-    git clone https://github.com//ckanext-embedding.git
-    cd ckanext-embedding
+    git clone https://github.com//ckanext-embeddings.git
+    cd ckanext-embeddings
     pip install -e .
 	pip install -r requirements.txt
 
-3. Add `embedding` to the `ckan.plugins` setting in your CKAN
+3. Add `embeddings` to the `ckan.plugins` setting in your CKAN
    config file (by default the config file is located at
    `/etc/ckan/default/ckan.ini`).
 
@@ -70,11 +167,11 @@ None at present
 
 ## Developer installation
 
-To install ckanext-embedding for development, activate your CKAN virtualenv and
+To install ckanext-embeddings for development, activate your CKAN virtualenv and
 do:
 
-    git clone https://github.com//ckanext-embedding.git
-    cd ckanext-embedding
+    git clone https://github.com//ckanext-embeddings.git
+    cd ckanext-embeddings
     python setup.py develop
     pip install -r dev-requirements.txt
 
@@ -84,39 +181,6 @@ do:
 To run the tests, do:
 
     pytest --ckan-ini=test.ini
-
-
-## Releasing a new version of ckanext-embedding
-
-If ckanext-embedding should be available on PyPI you can follow these steps to publish a new version:
-
-1. Update the version number in the `setup.py` file. See [PEP 440](http://legacy.python.org/dev/peps/pep-0440/#public-version-identifiers) for how to choose version numbers.
-
-2. Make sure you have the latest version of necessary packages:
-
-    pip install --upgrade setuptools wheel twine
-
-3. Create a source and binary distributions of the new version:
-
-       python setup.py sdist bdist_wheel && twine check dist/*
-
-   Fix any errors you get.
-
-4. Upload the source distribution to PyPI:
-
-       twine upload dist/*
-
-5. Commit any outstanding changes:
-
-       git commit -a
-       git push
-
-6. Tag the new release of the project on GitHub with the version number from
-   the `setup.py` file. For example if the version number in `setup.py` is
-   0.0.1 then do:
-
-       git tag 0.0.1
-       git push --tags
 
 ## License
 
