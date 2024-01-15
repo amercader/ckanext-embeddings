@@ -1,3 +1,5 @@
+import json
+
 import ckan.plugins as plugins
 
 from ckan import model
@@ -62,8 +64,14 @@ class EmbeddingPlugin(plugins.SingletonPlugin):
         return dataset_dict
 
     def before_dataset_search(self, search_params):
+        extras = search_params.get("extras", {})
+        if isinstance(extras, str):
+            try:
+                extras = json.loads(extras)
+            except ValueError:
+                raise toolkit.ValidationError({"extras": f"Wrong JSON object: {extras}"})
 
-        if not toolkit.asbool(search_params.get("extras", {}).get("ext_vector_search")):
+        if not toolkit.asbool(extras.get("ext_vector_search")):
             return search_params
 
         q = search_params.get("q")
