@@ -1,13 +1,16 @@
+import os
 import logging
 
 from sentence_transformers import SentenceTransformer
 from openai import OpenAI
+import tiktoken
+
+from ckan.plugins import toolkit
 
 
 log = logging.getLogger(__name__)
 
 
-# TODO: token count function
 class BaseEmbeddingsBackend:
     def get_dataset_values(self, dataset_dict):
 
@@ -15,6 +18,8 @@ class BaseEmbeddingsBackend:
             return dataset_dict["title"] + " " + dataset_dict["notes"]
         else:
             return dataset_dict["title"]
+
+        #return dataset_dict["title"]
 
     def get_embedding_for_dataset(self, dataset_dict):
 
@@ -46,7 +51,9 @@ class SentenceTransformerBackend(BaseEmbeddingsBackend):
         )
         max_input = self.model.max_seq_length
         if num_input > max_input:
-            log.info(f"Too many input values, input will be truncated ({num_input} vs {max_input})")
+            log.info(
+                f"Too many input values, input will be truncated ({num_input} vs {max_input})"
+            )
 
     def create_embedding(self, values):
         self._check_input_length(values)
@@ -59,11 +66,27 @@ class OpenAIBackend(BaseEmbeddingsBackend):
     client = None
 
     def __init__(self):
-        # TODO: config API key
+        # TODO: config declaration
+        api_key = toolkit.config.get(
+            "ckanext.embeddings.openai.api_key", os.environ.get("OPENAI_API_KEY")
+        )
 
-        self.client = OpenAI()
+        self.client = OpenAI(api_key=api_key)
+
+    def _check_input_length(self, values):
+        # TODO: configure
+        encoding = tiktoken.get_encoding("cl100k_base")
+        max_input = 8191
+        num_tokens = len(encoding.encode(values))
+        log.debug(f"[OpenAI Embeddings API] Input size: {num_tokens}")
+        if num_tokens > max_input:
+            log.info(
+                f"Too many input values, input will be truncated ({num_tokens} vs {max_input})"
+            )
 
     def create_embedding(self, values):
+
+        self._check_input_length(values)
 
         # TODO: config model
         response = self.client.embeddings.create(
@@ -83,6 +106,8 @@ embeddings_backends = {
 def get_embeddings_backend():
 
     # TODO: configure
-    backend = "sentence_transformers"
+    backend = "openai"
+
+#    backend = "sentence_transformers"
 
     return embeddings_backends[backend]()

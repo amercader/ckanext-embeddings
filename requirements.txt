@@ -1,4 +1,4 @@
-# TODO: pin
+# TODO: pin / split
 openai
+tiktoken
 sentence-transformers
-
