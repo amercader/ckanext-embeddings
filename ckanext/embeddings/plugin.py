@@ -54,8 +54,10 @@ class EmbeddingPlugin(plugins.SingletonPlugin):
         dataset_embedding = self.backend.get_embedding_for_dataset(dataset_dict)
 
         if dataset_embedding is not None:
-            # TODO: config field name
-            dataset_dict["vector"] = list(map(str, dataset_embedding))
+            field_name = toolkit.config.get(
+                "ckanext.embeddings.solr_vector_field_name", "vector"
+            )
+            dataset_dict[field_name] = list(map(str, dataset_embedding))
 
         return dataset_dict
 
@@ -74,10 +76,12 @@ class EmbeddingPlugin(plugins.SingletonPlugin):
         # TODO: default
         rows = search_params.get("rows", 10)
 
-        # {!knn f%3Dvector topK%3D10}[embedding]
-
         embedding = self.backend.get_embedding_for_string(q)
 
-        search_params["q"] = f"{{!knn f=vector topK={rows}}}{list(embedding)}"
+        field_name = toolkit.config.get(
+            "ckanext.embeddings.solr_vector_field_name", "vector"
+        )
+
+        search_params["q"] = f"{{!knn f={field_name} topK={rows}}}{list(embedding)}"
 
         return search_params

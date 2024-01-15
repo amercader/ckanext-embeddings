@@ -21,9 +21,12 @@ def package_similar_show(context, data_dict):
 
     backend = get_embeddings_backend()
     dataset_embedding = backend.get_embedding_for_dataset(dataset_dict)
+
+    field_name = toolkit.config.get("ckanext.embeddings.solr_vector_field_name", "vector")
+
     search_params = {}
     search_params["defType"] = "lucene"
-    search_params["q"] = f"{{!knn f=vector topK={limit}}}{list(dataset_embedding)}"
+    search_params["q"] = f"{{!knn f={field_name} topK={limit}}}{list(dataset_embedding)}"
     search_params["fq"] = f"-id:{dataset_dict['id']}"
 
     results = toolkit.get_action("package_search")({}, search_params)

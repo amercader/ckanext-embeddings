@@ -52,8 +52,10 @@ def search(query: str, limit: int):
     query_embedding = backend.get_embedding_for_string(query)
     search_params = {}
     search_params["defType"] = "lucene"
-    # TODO: config field name
-    search_params["q"] = f"{{!knn f=vector topK={limit}}}{list(query_embedding)}"
+
+    field_name = toolkit.config.get("ckanext.embeddings.solr_vector_field_name", "vector")
+
+    search_params["q"] = f"{{!knn f={field_name} topK={limit}}}{list(query_embedding)}"
 
     result = toolkit.get_action("package_search")({"ignore_auth": True}, search_params)
 
