@@ -7,7 +7,7 @@ import click
 from ckan import model
 from ckan.plugins import toolkit
 
-from ckanext.embeddings.lib import get_embeddings_backend
+from ckanext.embeddings.backends import get_embeddings_backend
 
 
 def get_commands():

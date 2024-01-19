@@ -9,7 +9,7 @@ from ckanext.embeddings.model import DatasetEmbedding
 from ckanext.embeddings import cli
 from ckanext.embeddings.actions import package_similar_show
 from ckanext.embeddings.auth import package_similar_show as package_similar_show_auth
-from ckanext.embeddings.lib import get_embeddings_backend
+from ckanext.embeddings.backends import get_embeddings_backend
 
 
 class EmbeddingPlugin(plugins.SingletonPlugin):
