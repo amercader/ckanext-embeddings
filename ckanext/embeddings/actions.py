@@ -6,7 +6,7 @@ from ckanext.embeddings.backends import get_embeddings_backend
 @toolkit.side_effect_free
 def package_similar_show(context, data_dict):
     dataset_id = toolkit.get_or_bust(data_dict, "id")
-    limit = data_dict.get("limit", 5)
+    limit = data_dict.get("limit") or 5
     try:
         limit = int(limit)
     except ValueError:

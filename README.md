@@ -38,7 +38,7 @@ datasets to a "Bathing Water Quality" one, besides other datasets explicitly men
 metadata you'll get others that might include things like "Wastewater Treatment", "Aquaculture Sites" or "Lakes".
 
 The plugin adds a `package_similar_show` action that will return the closest datasets to the one provided with
-the `id` parameter (id or name). 5 are returned by default, which can be changed using the `limit` paramater.
+the `id` parameter (id or name). 5 are returned by default, which can be changed using the `limit` parameter.
 
 
 #### 2. Semantic search
@@ -84,10 +84,6 @@ ckanapi action package_search q=boats extras='{"ext_vector_search":"true"}' | jq
 
 Remember that the Semantic Search will always return a fixed number of datasets (the default in this case is 10).
 
-
-
-
-
 ## Requirements
 
 Tested on CKAN 2.10/master
@@ -132,7 +128,7 @@ TODO
 ## Customizing
 
 You can choose the backend used to generate the embeddings by settings the `ckanext.embeddings.backend` config option.
-Right now the plugins includes two backends, one that runs locally using  [Sentence Transformers](https://www.sbert.net/)'s `all-MiniLM-L6-v2` model (`sentence_transformers`, the default one) and one that uses OpenAI's Embeddings API (`openai`). You will need
+Right now the plugin includes two backends, one that runs locally using  [Sentence Transformers](https://www.sbert.net/)'s `all-MiniLM-L6-v2` model (`sentence_transformers`, the default one) and one that uses OpenAI's Embeddings API (`openai`). You will need
 to provide an API key for this one, either via the `ckanext.embeddings.openai.api_key` config option or a `OPENAI_API_KEY` env var.
 
 Additionally, it's really easy to provide your own backends. You can write your own class that inherits from
@@ -206,7 +202,7 @@ USER solr
 
 ```
 
-and then in the ini file:
+And then in the ini file you can choose the Solr field used to when indexing/querying:
 
 ```ini
 ckanext.embeddings.solr_vector_field_name = vector

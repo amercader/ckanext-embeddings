@@ -1,0 +1,17 @@
+{% ckan_extends %}
+
+{% block primary_content_inner %}
+  {{ super() }}
+
+  {% asset "ckanext-embeddings/css" %}
+
+  <section class="similar-datasets">
+    <h3>{{ _('Similar Datasets') }}</h3>
+
+    {% set similar_datasets = h.embeddings_get_similar_datasets(pkg.id) %}
+
+    {{ h.snippet('snippets/package_list.html', packages=similar_datasets) }}
+  </section>
+
+{% endblock %}
+

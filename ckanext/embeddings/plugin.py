@@ -6,7 +6,7 @@ from ckan import model
 import ckan.plugins.toolkit as toolkit
 
 from ckanext.embeddings.model import DatasetEmbedding
-from ckanext.embeddings import cli
+from ckanext.embeddings import cli, helpers
 from ckanext.embeddings.actions import package_similar_show
 from ckanext.embeddings.auth import package_similar_show as package_similar_show_auth
 from ckanext.embeddings.backends import get_embeddings_backend
@@ -18,6 +18,7 @@ class EmbeddingPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IClick)
     plugins.implements(plugins.IActions)
     plugins.implements(plugins.IAuthFunctions)
+    plugins.implements(plugins.ITemplateHelpers)
     plugins.implements(plugins.IPackageController, inherit=True)
 
     backend = None
@@ -46,6 +47,11 @@ class EmbeddingPlugin(plugins.SingletonPlugin):
     def get_auth_functions(self):
         return {"package_similar_show": package_similar_show_auth}
 
+    # ITemplateHelpers
+
+    def get_helpers(self):
+        return {"embeddings_get_similar_datasets": helpers.get_similar_datasets}
+
     # IDatasetForm
 
     def before_dataset_index(self, dataset_dict):
@@ -70,7 +76,9 @@ class EmbeddingPlugin(plugins.SingletonPlugin):
             try:
                 extras = json.loads(extras)
             except ValueError:
-                raise toolkit.ValidationError({"extras": f"Wrong JSON object: {extras}"})
+                raise toolkit.ValidationError(
+                    {"extras": f"Wrong JSON object: {extras}"}
+                )
 
         if not toolkit.asbool(extras.get("ext_vector_search")):
             return search_params

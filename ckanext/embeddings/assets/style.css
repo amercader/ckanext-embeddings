@@ -5,3 +5,11 @@
 .semantic-search-label:after {
   content: '';
 }
+
+.similar-datasets {
+  margin-top: 30px;
+}
+
+.similar-datasets > h3 {
+  margin-bottom: 20px;
+}
