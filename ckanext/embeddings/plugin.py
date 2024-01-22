@@ -29,6 +29,7 @@ class EmbeddingPlugin(plugins.SingletonPlugin):
         self.backend = get_embeddings_backend()
 
         toolkit.add_template_directory(config, "templates")
+        toolkit.add_resource("assets", "ckanext-embeddings")
 
     # IClick
 

@@ -1,5 +1,7 @@
-/*
-body {
-  border-radius: 0;
+.semantic-search-label {
+  font-size: 16px;
 }
-*/
+
+.semantic-search-label:after {
+  content: '';
+}

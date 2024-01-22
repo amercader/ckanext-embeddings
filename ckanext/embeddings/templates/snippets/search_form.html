@@ -2,12 +2,14 @@
 
 {% block search_title %}
   {{ super() }}
+
+  {% asset "ckanext-embeddings/css" %}
   <div class="form-check form-switch">
 	<input class="form-check-input" type="checkbox" value="" id="ext_vector_search" name="ext_vector_search"
       {% if h.get_request_param("ext_vector_search") == "true" %}checked{% endif %}
        onclick="document.getElementById('ext_vector_search').value = (document.getElementById('ext_vector_search').checked === true)">
-	<label class="form-check-label" for="ext_vector_search">
-	  Vector search
+	<label class="form-check-label semantic-search-label" for="ext_vector_search">
+	  Semantic search
 	</label>
   </div>
 {% endblock %}
