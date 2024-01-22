@@ -97,17 +97,24 @@ class OpenAIBackend(BaseEmbeddingsBackend):
         return embeddings[0]
 
 
-embeddings_backends = {
-    "sentence_transformers": SentenceTransformerBackend,
-    "openai": OpenAIBackend,
-}
+embeddings_backends = {}
+
+
+def _load_embeddings_backends():
+    from importlib.metadata import entry_points
+    for ep in entry_points(group="ckanext.embeddings.backends"):
+        embeddings_backends[ep.name] = ep.load()
+        log.debug(f"Registering Embeddings Backend: {ep.name}")
 
 
 def get_embeddings_backend():
 
-    # TODO: configure
-    #backend = "openai"
+    # TODO: config declaration
 
-    backend = "sentence_transformers"
+    backend = toolkit.config.get("ckanext.embeddings.backend", "sentence_transformers")
 
+    log.debug(f"Using Embeddings Backend: {backend}")
     return embeddings_backends[backend]()
+
+
+_load_embeddings_backends()

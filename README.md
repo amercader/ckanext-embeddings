@@ -24,12 +24,12 @@ introductory resources to learn more about embeddings, here are some I found use
 * [Getting Started With Embeddings](https://huggingface.co/blog/getting-started-with-embeddings)
 
 In the context of CKAN, this plugin computes embeddings for all datasets, using their metadata
-(their title or description, but also any other relevant metadata field can be used). Being able to 
+(their title or description, but also any other relevant metadata field can be used). Being able to
 compare datasets allows us to build features that increase discoverability of relevant data for users.
 
 Right now there are two features implemented:
 
-1. Similar datasets
+#### 1. Similar datasets
 
 By computing all datasets embeddings and rank them against a particular dataset one, we can get the most
 similar datasets to the one provided according to the model. This similarity won't just take text-based similarity
@@ -41,10 +41,10 @@ The plugin adds a `package_similar_show` action that will return the closest dat
 the `id` parameter (id or name). 5 are returned by default, which can be changed using the `limit` paramater.
 
 
-2. Semantic search
+#### 2. Semantic search
 
 Following the same approach as above, we can rank the embeddings of the portal datasets not against another dataset
-title but against an arbitrary query term. That will give us the most similar datasets to the provided search term, 
+title but against an arbitrary query term. That will give us the most similar datasets to the provided search term,
 and as it is Solr what is performing the query, we can include any additional filters like in the normal CKAN search.
 
 There's one important distinction though, and that is that the Semantic or Vector search always returns a fixed number
@@ -84,20 +84,16 @@ ckanapi action package_search q=boats extras='{"ext_vector_search":"true"}' | jq
 
 Remember that the Semantic Search will always return a fixed number of datasets (the default in this case is 10).
 
-## Implementation
 
-TODO
 
-## Customizing
 
-TODO
 
 ## Requirements
 
 Tested on CKAN 2.10/master
 
 As of January 2024 this plugin requires a patch in CKAN core to allow the use of
-local fields in Solr queries (an upstream patch will be submitted to handle this 
+local fields in Solr queries (an upstream patch will be submitted to handle this
 via configuration instead):
 
 ```diff
@@ -106,7 +102,7 @@ index 70869ae3f..fb56016c0 100644
 --- a/ckan/lib/search/query.py
 +++ b/ckan/lib/search/query.py
 @@ -397,8 +397,10 @@ class PackageSearchQuery(SearchQuery):
- 
+
          query.setdefault("df", "text")
          query.setdefault("q.op", "AND")
 +
@@ -121,13 +117,103 @@ index 70869ae3f..fb56016c0 100644
 ```
 
 The Semantic Search feature requires a custom Solr schema, with a [Dense Vector Search](https://solr.apache.org/guide/solr/latest/query-guide/dense-vector-search.html) field. Included in the plugin there is a Dockerfile based on the official
-CKAN Solr images that you can use (you might need to adjust it to the model you use, see TODO):
+CKAN Solr images that you can use (you might need to adjust it to the model you use, see [Customizing](/#customizing)):
 
 ```
 cd solr
 docker build -t ckan/ckan-solr:2.10-solr9-vector .
 docker run --name ckan-solr-9-vector -d ckan/ckan-solr:2.10-solr9-vector
 ```
+
+## Implementation
+
+TODO
+
+## Customizing
+
+You can choose the backend used to generate the embeddings by settings the `ckanext.embeddings.backend` config option.
+Right now the plugins includes two backends, one that runs locally using  [Sentence Transformers](https://www.sbert.net/)'s `all-MiniLM-L6-v2` model (`sentence_transformers`, the default one) and one that uses OpenAI's Embeddings API (`openai`). You will need
+to provide an API key for this one, either via the `ckanext.embeddings.openai.api_key` config option or a `OPENAI_API_KEY` env var.
+
+Additionally, it's really easy to provide your own backends. You can write your own class that inherits from
+`ckanext.embeddings.backends.BaseEmbeddingsBackend` and provide the following methods:
+
+```python
+from ckanext.embeddings.backends import BaseEmbeddingsBackend
+
+class MyBackend(BaseEmbeddingsBackend):
+    def get_dataset_values(self, dataset_dict):
+        """ Return the text value that should be used to create the embedding
+            for a particular dataset. This can include any custom fields in
+            addition to the standard title or notes
+        """
+        return dataset_dict["title"]
+
+    def create_embedding(self, values):
+        """ Return the actual embeddings vector for the provided values"
+        """
+        pass
+```
+
+Once implemented, register your backend by adding it to the `ckanext.embeddings.backends` entry point
+in your extension `setup.cfg` file:
+
+```
+[options.entry_points]
+ckan.plugins =
+             my_plugin = ckanext.my_ext.plugin:MyPlugin
+
+babel.extractors =
+                 ckan = ckan.lib.extract:extract_ckan
+
+ckanext.embeddings.backends =
+        my_embeddings_backend = ckanext.my_ext.embeddings:MyBackend
+```
+
+You can then start using by setting `ckanext.embeddings.backend = my_embeddings_backend` in your ini file.
+
+Remember that the dimensions set in the Solr vector field need to match the ones used in the embeddings model you use.
+When trying out different models it might be handy to define different vector fields and switch from one
+to the other to test the returned values using the `ckanext.embeddings.solr_vector_field_name` config, e.g:
+
+```dockerfile
+FROM ckan/ckan-solr:2.10-solr9
+
+USER root
+
+# Sentence Transformers all-MiniLM-L6-v2 (Default)
+ENV SOLR_VECTOR_FIELD_DEFINITION '<fieldType name="knn_vector" class="solr.DenseVectorField" vectorDimension="384" similarityFunction="cosine"/>'
+ENV SOLR_VECTOR_FIELD '<field name="vector" type="knn_vector" indexed="true" stored="true"/>'
+
+RUN sed -i "/<types>/a $SOLR_VECTOR_FIELD_DEFINITION" $SOLR_SCHEMA_FILE
+RUN sed -i "/<fields>/a $SOLR_VECTOR_FIELD" $SOLR_SCHEMA_FILE
+
+# Sentence Transformers all-mpnet-base-v2
+ENV SOLR_VECTOR_FIELD_DEFINITION '<fieldType name="knn_vector_2" class="solr.DenseVectorField" vectorDimension="768" similarityFunction="cosine"/>'
+ENV SOLR_VECTOR_FIELD '<field name="vector_st_mpnet" type="knn_vector_2" indexed="true" stored="true"/>'
+
+RUN sed -i "/<types>/a $SOLR_VECTOR_FIELD_DEFINITION" $SOLR_SCHEMA_FILE
+RUN sed -i "/<fields>/a $SOLR_VECTOR_FIELD" $SOLR_SCHEMA_FILE
+
+# OpenAI
+ENV SOLR_VECTOR_FIELD_DEFINITION '<fieldType name="knn_vector_3" class="solr.DenseVectorField" vectorDimension="1536" similarityFunction="cosine"/>'
+ENV SOLR_VECTOR_FIELD '<field name="vector_openai" type="knn_vector_3" indexed="true" stored="true"/>'
+
+RUN sed -i "/<types>/a $SOLR_VECTOR_FIELD_DEFINITION" $SOLR_SCHEMA_FILE
+RUN sed -i "/<fields>/a $SOLR_VECTOR_FIELD" $SOLR_SCHEMA_FILE
+
+USER solr
+
+```
+
+and then in the ini file:
+
+```ini
+ckanext.embeddings.solr_vector_field_name = vector
+#ckanext.embeddings.solr_vector_field_name = vector_st_mpnet
+#ckanext.embeddings.solr_vector_field_name = vector_openai
+```
+
 
 
 ## Installation
