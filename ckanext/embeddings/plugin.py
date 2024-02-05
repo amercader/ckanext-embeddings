@@ -5,7 +5,6 @@ import ckan.plugins as plugins
 from ckan import model
 import ckan.plugins.toolkit as toolkit
 
-from ckanext.embeddings.model import DatasetEmbedding
 from ckanext.embeddings import cli, helpers
 from ckanext.embeddings.actions import package_similar_show
 from ckanext.embeddings.auth import package_similar_show as package_similar_show_auth
