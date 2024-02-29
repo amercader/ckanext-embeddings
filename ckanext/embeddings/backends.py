@@ -13,7 +13,6 @@ log = logging.getLogger(__name__)
 
 class BaseEmbeddingsBackend:
     def get_dataset_values(self, dataset_dict):
-
         if dataset_dict.get("notes"):
             return dataset_dict["title"] + " " + dataset_dict["notes"]
         else:

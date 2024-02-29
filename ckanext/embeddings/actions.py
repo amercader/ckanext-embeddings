@@ -12,17 +12,16 @@ def package_similar_show(context, data_dict):
     except ValueError:
         raise toolkit.ValidationError(f"Wrong value for limit paramater: {limit}")
 
-    try:
-        dataset_dict = toolkit.get_action("package_show")(
-            {"ignore_auth": True}, {"id": dataset_id}
-        )
-    except toolkit.ObjectNotFound:
-        raise toolkit.ObjectNotFound(f"Dataset not found: {dataset_id}")
-
-    backend = get_embeddings_backend()
-    dataset_embedding = backend.get_embedding_for_dataset(dataset_dict)
-
     field_name = toolkit.config.get("ckanext.embeddings.solr_vector_field_name", "vector")
+
+    try:
+        vectors = toolkit.get_action("package_search")(
+            {"ignore_auth": True}, {"fq": f"(id:{dataset_id} OR name:{dataset_id})", 'fl':f"{field_name},id"}
+        )['results']
+        dataset_dict = vectors.pop()
+        dataset_embedding = dataset_dict[field_name]
+    except IndexError:
+        raise toolkit.ObjectNotFound(f"Dataset not found: {dataset_id}")
 
     search_params = {}
     search_params["defType"] = "lucene"
