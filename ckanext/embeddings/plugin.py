@@ -70,6 +70,9 @@ class EmbeddingPlugin(plugins.SingletonPlugin):
 
         return dataset_dict
 
+    def before_index(self, dataset_dict):
+        return self.before_dataset_index(dataset_dict)
+
     def before_dataset_search(self, search_params):
         extras = search_params.get("extras", {})
         if isinstance(extras, str):
@@ -102,3 +105,6 @@ class EmbeddingPlugin(plugins.SingletonPlugin):
         search_params["q"] = f"{{!knn f={field_name} topK={rows}}}{list(embedding)}"
 
         return search_params
+
+    def before_search(self, search_params):
+        return self.before_dataset_search(search_params)
