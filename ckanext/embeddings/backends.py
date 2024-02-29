@@ -101,7 +101,12 @@ embeddings_backends = {}
 
 def _load_embeddings_backends():
     from importlib.metadata import entry_points
-    for ep in entry_points(group="ckanext.embeddings.backends"):
+    try:
+        eps = entry_points(group="ckanext.embeddings.backends")
+    except:
+        # python 3.9/3.8
+        eps = (ep for ep in entry_points()['ckanext.embeddings.backends'])
+    for ep in eps:
         embeddings_backends[ep.name] = ep.load()
         log.debug(f"Registering Embeddings Backend: {ep.name}")
 
