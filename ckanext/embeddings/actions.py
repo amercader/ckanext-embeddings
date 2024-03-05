@@ -1,7 +1,7 @@
 from ckan.plugins import toolkit
 
-from ckanext.embeddings.backends import get_embeddings_backend
-
+import logging
+log = logging.getLogger(__name__)
 
 @toolkit.side_effect_free
 def package_similar_show(context, data_dict):
