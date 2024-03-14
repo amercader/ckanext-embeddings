@@ -51,7 +51,7 @@ class SentenceTransformerBackend(BaseEmbeddingsBackend):
         )
         max_input = self.model.max_seq_length
         if num_input > max_input:
-            log.info(
+            log.debug(
                 f"Too many input values, input will be truncated ({num_input} vs {max_input})"
             )
 
@@ -80,7 +80,7 @@ class OpenAIBackend(BaseEmbeddingsBackend):
         num_tokens = len(encoding.encode(values))
         log.debug(f"[OpenAI Embeddings API] Input size: {num_tokens}")
         if num_tokens > max_input:
-            log.info(
+            log.debug(
                 f"Too many input values, input will be truncated ({num_tokens} vs {max_input})"
             )
 
