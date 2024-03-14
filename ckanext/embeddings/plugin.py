@@ -5,7 +5,6 @@ import ckan.plugins as plugins
 from ckan import model
 import ckan.plugins.toolkit as toolkit
 
-from ckanext.embeddings.model import DatasetEmbedding
 from ckanext.embeddings import cli, helpers
 from ckanext.embeddings.actions import package_similar_show
 from ckanext.embeddings.auth import package_similar_show as package_similar_show_auth
@@ -21,14 +20,17 @@ class EmbeddingPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.ITemplateHelpers)
     plugins.implements(plugins.IPackageController, inherit=True)
 
-    backend = None
+    _backend = None
+
+    @property
+    def backend(self):
+        if self._backend is None:
+            self._backend = get_embeddings_backend()
+        return self._backend
 
     # IConfigurer
 
     def update_config(self, config):
-
-        self.backend = get_embeddings_backend()
-
         toolkit.add_template_directory(config, "templates")
         toolkit.add_resource("assets", "ckanext-embeddings")
 
@@ -58,8 +60,6 @@ class EmbeddingPlugin(plugins.SingletonPlugin):
 
         dataset_id = dataset_dict["id"]
 
-        if not self.backend:
-            self.backend = get_embeddings_backend()
         dataset_embedding = self.backend.get_embedding_for_dataset(dataset_dict)
 
         if dataset_embedding is not None:
@@ -69,6 +69,9 @@ class EmbeddingPlugin(plugins.SingletonPlugin):
             dataset_dict[field_name] = list(map(str, dataset_embedding))
 
         return dataset_dict
+
+    def before_index(self, dataset_dict):
+        return self.before_dataset_index(dataset_dict)
 
     def before_dataset_search(self, search_params):
         extras = search_params.get("extras", {})
@@ -102,3 +105,6 @@ class EmbeddingPlugin(plugins.SingletonPlugin):
         search_params["q"] = f"{{!knn f={field_name} topK={rows}}}{list(embedding)}"
 
         return search_params
+
+    def before_search(self, search_params):
+        return self.before_dataset_search(search_params)

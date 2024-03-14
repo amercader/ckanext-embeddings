@@ -66,3 +66,10 @@ def search(query: str, limit: int):
     for r in result["results"]:
 
         print(f"{r['id']} - {r['title']}")
+
+
+@embeddings.command()
+def load():
+    """ Loads the backend embeddings, filling whatever cache is required, downloading models, etc """
+    backend = get_embeddings_backend()
+

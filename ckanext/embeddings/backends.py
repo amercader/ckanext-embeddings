@@ -13,7 +13,6 @@ log = logging.getLogger(__name__)
 
 class BaseEmbeddingsBackend:
     def get_dataset_values(self, dataset_dict):
-
         if dataset_dict.get("notes"):
             return dataset_dict["title"] + " " + dataset_dict["notes"]
         else:
@@ -102,19 +101,30 @@ embeddings_backends = {}
 
 def _load_embeddings_backends():
     from importlib.metadata import entry_points
-    for ep in entry_points(group="ckanext.embeddings.backends"):
+    try:
+        eps = entry_points(group="ckanext.embeddings.backends")
+    except:
+        # python 3.9/3.8
+        eps = (ep for ep in entry_points()['ckanext.embeddings.backends'])
+    for ep in eps:
         embeddings_backends[ep.name] = ep.load()
         log.debug(f"Registering Embeddings Backend: {ep.name}")
 
+_embeddings_backend = None
 
 def get_embeddings_backend():
-
     # TODO: config declaration
-
+    global _embeddings_backend
     backend = toolkit.config.get("ckanext.embeddings.backend", "sentence_transformers")
 
     log.debug(f"Using Embeddings Backend: {backend}")
-    return embeddings_backends[backend]()
+    import time
+    start = time.time()
+    try:
+        _load_embeddings_backends()
+        if _embeddings_backend is None:
+            _embeddings_backend = embeddings_backends[backend]()
+        return _embeddings_backend
+    finally:
+        log.debug("loading embeddings took: %.3f sec", time.time()-start)
 
-
-_load_embeddings_backends()
