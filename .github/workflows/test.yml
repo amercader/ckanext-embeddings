@@ -7,12 +7,12 @@ jobs:
       # The CKAN version tag of the Solr and Postgres containers should match
       # the one of the container the tests run on.
       # You can switch this base image with a custom image tailored to your project
-      image: openknowledge/ckan-dev:2.9
+      image: ckan/ckan-dev:2.10
     services:
       solr:
-        image: ckan/ckan-solr-dev:2.9
+        image: ckan/ckan-solr:2.10-solr9-vector
       postgres:
-        image: ckan/ckan-postgres-dev:2.9
+        image: ckan/ckan-postgres-dev:2.10
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -29,7 +29,12 @@ jobs:
       CKAN_REDIS_URL: redis://redis:6379/1
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
+    - name: Cache models
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/torch
+        key: ${{ runner.os }}-torch-models-      
     - name: Install requirements
       # Install any extra requirements your extension has here (dev requirements, other extensions etc)
       run: |
@@ -43,6 +48,8 @@ jobs:
         sed -i -e 's/use = config:.*/use = config:\/srv\/app\/src\/ckan\/test-core.ini/' test.ini
 
         ckan -c test.ini db init
+    - name: Load models
+      run: ckan embeddings load
     - name: Run tests
-      run: pytest --ckan-ini=test.ini --cov=ckanext.embedding --disable-warnings ckanext/embedding
+      run: pytest --ckan-ini=test.ini --cov=ckanext.embeddings --disable-warnings -s ckanext/embeddings
 
