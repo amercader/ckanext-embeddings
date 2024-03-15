@@ -88,9 +88,10 @@ Remember that the Semantic Search will always return a fixed number of datasets 
 
 Tested on CKAN 2.10/master
 
-As of January 2024 this plugin requires a patch in CKAN core to allow the use of
-local fields in Solr queries (an upstream patch will be submitted to handle this
-via configuration instead):
+This plugin requires at least CKAN 2.10.4 and 2.9.11, as it needs [ckan/ckan#8053](https://github.com/ckan/ckan/pull/8053).
+
+If for some reason you can't upgrade to a newer version, you'll need the following patch
+in CKAN core to allow the use of local fields in Solr queries:
 
 ```diff
 diff --git a/ckan/lib/search/query.py b/ckan/lib/search/query.py
@@ -231,20 +232,16 @@ To install ckanext-embeddings:
    config file (by default the config file is located at
    `/etc/ckan/default/ckan.ini`).
 
-4. Restart CKAN. For example if you've deployed CKAN with Apache on Ubuntu:
+4. Add the following configuration option to allow the use of a custom query parser
+   in Solr:
 
-     sudo service apache2 reload
+         ckan.search.solr_allowed_query_parsers = knn
 
+5. Restart the CKAN process.
 
 ## Config settings
 
-None at present
-
-**TODO:** Document any optional config settings here. For example:
-
-	# The minimum number of hours to wait before re-checking a resource
-	# (optional, default: 24).
-	ckanext.embedding.some_setting = some_default_value
+See [Customizing](#customizing).
 
 
 ## Developer installation
@@ -254,7 +251,7 @@ do:
 
     git clone https://github.com//ckanext-embeddings.git
     cd ckanext-embeddings
-    python setup.py develop
+    pip install -e .
     pip install -r dev-requirements.txt
 
 
