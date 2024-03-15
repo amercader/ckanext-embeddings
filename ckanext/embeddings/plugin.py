@@ -93,7 +93,6 @@ class EmbeddingPlugin(plugins.SingletonPlugin):
 
         search_params["defType"] = "lucene"
 
-        # TODO: default
         rows = search_params.get("rows", 10)
 
         embedding = self.backend.get_embedding_for_string(q)
