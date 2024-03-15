@@ -5,6 +5,9 @@ log = logging.getLogger(__name__)
 
 @toolkit.side_effect_free
 def package_similar_show(context, data_dict):
+
+    toolkit.check_access("package_similar_show", context, data_dict)
+
     dataset_id = toolkit.get_or_bust(data_dict, "id")
     limit = data_dict.get("limit") or 5
     try:
