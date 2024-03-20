@@ -39,6 +39,7 @@ jobs:
       # Install any extra requirements your extension has here (dev requirements, other extensions etc)
       run: |
         pip install -U pip
+        pip install -r /srv/app/src/ckan/dev-requirements.txt
         pip install -r requirements.txt
         pip install -r dev-requirements.txt
         pip install -e .
