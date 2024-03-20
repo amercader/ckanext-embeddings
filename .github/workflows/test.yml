@@ -7,6 +7,7 @@ jobs:
       # Use the Keitaro Ubuntu-based image as pytorch doesn't work on alpine
       # See amercader/ckanext-embeddings#4
       image: keitaro/ckan:2.10.4-focal
+      options: --user root
     services:
       solr:
         image: ckan/ckan-solr:2.10-solr9-vector
