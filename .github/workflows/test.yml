@@ -50,7 +50,7 @@ jobs:
 
         ckan -c test.ini db init
     - name: Load models
-      run: ckan embeddings load
+      run: ckan -c test.ini embeddings load
     - name: Run tests
       run: pytest --ckan-ini=test.ini --cov=ckanext.embeddings --disable-warnings -s ckanext/embeddings
 
