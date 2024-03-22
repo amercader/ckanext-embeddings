@@ -25,7 +25,7 @@ def test_embedding_gets_indexed():
 def test_semantic_search():
 
     dataset1 = factories.Dataset(title="A dataset about government budgets")
-    dataset2 = factories.Dataset(title="A dataset about a duck")
+    dataset2 = factories.Dataset(title="A dataset about a fish")
     dataset3 = factories.Dataset(title="A dataset about a cat")
 
     results = helpers.call_action(
