@@ -1,6 +1,8 @@
 
 # ckanext-embeddings
 
+[![Tests](https://github.com/amercader/ckanext-embeddings/workflows/Tests/badge.svg?branch=main)](https://github.com/amercader/ckanext-embeddings/actions)
+
 An extension that uses Machine Learning Embeddings to provide similarity-based features for CKAN portals. Currently there are two features explored:
 
 * Returning similar datasets
@@ -122,10 +124,6 @@ docker build -t ckan/ckan-solr:2.10-solr9-vector .
 docker run --name ckan-solr-9-vector -d ckan/ckan-solr:2.10-solr9-vector
 ```
 
-## Implementation
-
-TODO
-
 ## Customizing
 
 You can choose the backend used to generate the embeddings by settings the `ckanext.embeddings.backend` config option.
@@ -225,7 +223,7 @@ To install ckanext-embeddings:
 
     git clone https://github.com//ckanext-embeddings.git
     cd ckanext-embeddings
-    pip install -e .
+    pip install .
 	pip install -r requirements.txt
 
 3. Add `embeddings` to the `ckan.plugins` setting in your CKAN
@@ -252,6 +250,7 @@ do:
     git clone https://github.com//ckanext-embeddings.git
     cd ckanext-embeddings
     pip install -e .
+    pip install -r requirements.txt
     pip install -r dev-requirements.txt
 
 

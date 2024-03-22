@@ -3,23 +3,31 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - ckan-version-patch: "2.10.4"
+            ckan-version: "2.10"
+          - ckan-version-patch: "2.9.11"
+            ckan-version: "2.9"
+      fail-fast: false
     container:
-      # The CKAN version tag of the Solr and Postgres containers should match
-      # the one of the container the tests run on.
-      # You can switch this base image with a custom image tailored to your project
-      image: openknowledge/ckan-dev:2.9
+      # Use the Keitaro Ubuntu-based image as pytorch doesn't work on alpine
+      # See amercader/ckanext-embeddings#4
+      image: keitaro/ckan:${{ matrix.ckan-version-patch }}-focal
+      options: --user root
     services:
       solr:
-        image: ckan/ckan-solr-dev:2.9
+        image: ckan/ckan-solr:${{ matrix.ckan-version }}-solr9-vector
       postgres:
-        image: ckan/ckan-postgres-dev:2.9
+        image: ckan/ckan-postgres-dev:${{ matrix.ckan-version }}
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: postgres
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
       redis:
-          image: redis:3
+          image: redis:7
 
     env:
       CKAN_SQLALCHEMY_URL: postgresql://ckan_default:pass@postgres/ckan_test
@@ -29,10 +37,15 @@ jobs:
       CKAN_REDIS_URL: redis://redis:6379/1
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        cache: 'pip' # caching pip dependencies
     - name: Install requirements
       # Install any extra requirements your extension has here (dev requirements, other extensions etc)
       run: |
+        pip install -U pip
+        pip install -r /srv/app/src/ckan/dev-requirements.txt
         pip install -r requirements.txt
         pip install -r dev-requirements.txt
         pip install -e .
@@ -43,6 +56,8 @@ jobs:
         sed -i -e 's/use = config:.*/use = config:\/srv\/app\/src\/ckan\/test-core.ini/' test.ini
 
         ckan -c test.ini db init
+    - name: Load models
+      run: ckan -c test.ini embeddings load
     - name: Run tests
-      run: pytest --ckan-ini=test.ini --cov=ckanext.embedding --disable-warnings ckanext/embedding
+      run: pytest --ckan-ini=test.ini --cov=ckanext.embeddings --disable-warnings -s ckanext/embeddings
 
