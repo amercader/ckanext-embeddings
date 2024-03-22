@@ -3,23 +3,31 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - ckan-version-patch: "2.10.4"
+            ckan-version: "2.10"
+          - ckan-version-patch: "2.9.11"
+            ckan-version: "2.9"
+      fail-fast: false
     container:
       # Use the Keitaro Ubuntu-based image as pytorch doesn't work on alpine
       # See amercader/ckanext-embeddings#4
-      image: keitaro/ckan:2.10.4-focal
+      image: keitaro/ckan:${{ matrix.ckan-version-patch }}-focal
       options: --user root
     services:
       solr:
-        image: ckan/ckan-solr:2.10-solr9-vector
+        image: ckan/ckan-solr:${{ matrix.ckan-version }}-solr9-vector
       postgres:
-        image: ckan/ckan-postgres-dev:2.10
+        image: ckan/ckan-postgres-dev:${{ matrix.ckan-version }}
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: postgres
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
       redis:
-          image: redis:3
+          image: redis:7
 
     env:
       CKAN_SQLALCHEMY_URL: postgresql://ckan_default:pass@postgres/ckan_test
