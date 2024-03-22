@@ -30,11 +30,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Cache models
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/torch
-        key: ${{ runner.os }}-torch-models-      
+	- uses: actions/setup-python@v5
+	  with:
+		cache: 'pip' # caching pip dependencies
     - name: Install requirements
       # Install any extra requirements your extension has here (dev requirements, other extensions etc)
       run: |
