@@ -5,21 +5,23 @@
 {% block search_title %}
   {{ super() }}
 
-  {% asset "ckanext-embeddings/css" %}
-  <div class="form-check form-switch">
-	<input class="form-check-input" type="checkbox" value="{% if semantic_search %}true{% endif %}" id="ext_vector_search" name="ext_vector_search"
-      {% if semantic_search %}checked{% endif %}
-       onclick="document.getElementById('ext_vector_search').value = (document.getElementById('ext_vector_search').checked === true)">
-	<label class="form-check-label semantic-search-label" for="ext_vector_search">
-	  Semantic search
-	</label>
-  </div>
+  {% if type not in ("organization", "group") %}
+    {% asset "ckanext-embeddings/css" %}
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" value="{% if semantic_search %}true{% endif %}" id="ext_vector_search" name="ext_vector_search"
+        {% if semantic_search %}checked{% endif %}
+         onclick="document.getElementById('ext_vector_search').value = (document.getElementById('ext_vector_search').checked === true)">
+      <label class="form-check-label semantic-search-label" for="ext_vector_search">
+        Semantic search
+      </label>
+    </div>
+  {% endif %}
 {% endblock %}
 
 
 {% block search_sortby %}
 
-  {% if semantic_search %}
+  {% if semantic_search and type not in ("organization", "group") %}
     <div class="form-group control-order-by semantic-search-sort">
       {{_("Datasets sorted by similarity") }}
       {# We need to send this as part of the search params even if it's not used #}
