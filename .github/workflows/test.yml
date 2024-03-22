@@ -40,6 +40,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
+        python_version: "3.10"
         cache: 'pip' # caching pip dependencies
     - name: Install requirements
       # Install any extra requirements your extension has here (dev requirements, other extensions etc)
