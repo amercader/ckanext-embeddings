@@ -6,6 +6,11 @@
   content: '';
 }
 
+.semantic-search-sort {
+  font-style: italic;
+  padding-top: 10px;
+}
+
 .similar-datasets {
   margin-top: 30px;
 }
