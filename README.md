@@ -1,7 +1,7 @@
 
 # ckanext-embeddings
 
-[![Tests](https://github.com/amercader/ckanext-embeddings/workflows/Tests/badge.svg?branch=main)](https://github.com/amercader/ckanext-embeddings/actions)
+[![Tests](https://github.com/amercader/ckanext-embeddings/actions/workflows/test.yml/badge.svg)](https://github.com/amercader/ckanext-embeddings/actions/)
 
 An extension that uses Machine Learning Embeddings to provide similarity-based features for CKAN portals. Currently there are two features explored:
 
